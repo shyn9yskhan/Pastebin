@@ -3,6 +3,8 @@ package com.adyrbek.post_service.post.implementation;
 import com.adyrbek.post_service.post.Post;
 import com.adyrbek.post_service.post.PostRepository;
 import com.adyrbek.post_service.post.PostService;
+import com.adyrbek.post_service.post.client.IdGenerationClient;
+import com.adyrbek.post_service.post.client.ProfileClient;
 import org.springframework.stereotype.Service;
 import com.adyrbek.post_service.post.external.Profile;
 import org.springframework.web.client.RestTemplate;
@@ -13,16 +15,19 @@ import java.util.List;
 public class PostServiceImplementation implements PostService {
 
     PostRepository postRepository;
+    IdGenerationClient idGenerationClient;
+    ProfileClient profileClient;
 
-    public PostServiceImplementation(PostRepository postRepository) {
+    public PostServiceImplementation(PostRepository postRepository, IdGenerationClient idGenerationClient, ProfileClient profileClient) {
         this.postRepository = postRepository;
+        this.idGenerationClient = idGenerationClient;
+        this.profileClient = profileClient;
     }
 
     @Override
     public boolean createPost(String profileId, Post post) {
-        RestTemplate restTemplate = new RestTemplate();
-        String generatedPostId = restTemplate.getForObject("http://localhost:8081/idGeneration/postId", String.class);
-        Profile profile = getProfileFromProfileService(profileId);
+        String generatedPostId = idGenerationClient.generatePostId().getBody();
+        Profile profile = profileClient.getProfile(profileId).getBody();
 
         if (profile != null) {
             post.setId(generatedPostId);
@@ -63,10 +68,5 @@ public class PostServiceImplementation implements PostService {
     @Override
     public List<Post> getAllPosts(String profileId) {
         return postRepository.findByProfileId(profileId);
-    }
-
-    private Profile getProfileFromProfileService(String profileId) {
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject("http://localhost:8083/profiles/" + profileId, Profile.class);
     }
 }

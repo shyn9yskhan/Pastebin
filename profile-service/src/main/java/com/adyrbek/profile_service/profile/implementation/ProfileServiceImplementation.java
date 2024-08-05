@@ -3,6 +3,7 @@ package com.adyrbek.profile_service.profile.implementation;
 import com.adyrbek.profile_service.profile.ProfileService;
 import com.adyrbek.profile_service.profile.Profile;
 import com.adyrbek.profile_service.profile.ProfileRepository;
+import com.adyrbek.profile_service.profile.client.IdGenerationClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -11,15 +12,16 @@ import java.util.Optional;
 @Service
 public class ProfileServiceImplementation implements ProfileService {
     ProfileRepository profileRepository;
+    IdGenerationClient idGenerationClient;
 
-    public ProfileServiceImplementation(ProfileRepository profileRepository) {
+    public ProfileServiceImplementation(ProfileRepository profileRepository, IdGenerationClient idGenerationClient) {
         this.profileRepository = profileRepository;
+        this.idGenerationClient = idGenerationClient;
     }
 
     @Override
     public void createProfile(Profile profile) {
-        RestTemplate restTemplate = new RestTemplate();
-        String generatedProfileId = restTemplate.getForObject("http://localhost:8081/idGeneration/profileId", String.class);
+        String generatedProfileId = idGenerationClient.generatePostId().getBody();
         profile.setId(generatedProfileId);
         profileRepository.save(profile);
     }
